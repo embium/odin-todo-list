@@ -1,5 +1,3 @@
-import Storage from './modules/Storage'
-
 const listsContainer = document.querySelector("[data-lists]");
 const newListForm = document.querySelector("[data-new-list-form]");
 const newListInput = document.querySelector("[data-new-list-input]");
@@ -17,14 +15,15 @@ const clearCompleteTasksButton = document.querySelector(
   "[data-clear-complete-tasks-button]"
 );
 
-let lists = Storage.getTodoList()["projects"];
-let selectedListId = Storage.getSelectedListId() ? undefined : 0;
+const LOCAL_STORAGE_LIST_KEY = "task.lists";
+const LOCAL_STORAGE_SELECTED_LIST_ID_KEY = "task.selectedListId";
+let lists = JSON.parse(localStorage.getItem(LOCAL_STORAGE_LIST_KEY)) || [];
+let selectedListId = localStorage.getItem(LOCAL_STORAGE_SELECTED_LIST_ID_KEY);
 
 listsContainer.addEventListener("click", (e) => {
   if (e.target.tagName.toLowerCase() === "li") {
     selectedListId = e.target.dataset.listId;
-    Storage.setSelectedListId(selectedListId);
-    render();
+    saveAndRender();
   }
 });
 
@@ -35,25 +34,21 @@ tasksContainer.addEventListener("click", (e) => {
       (task) => task.id === e.target.id
     );
     selectedTask.complete = e.target.checked;
+    save();
     renderTaskCount(selectedList);
   }
 });
 
 clearCompleteTasksButton.addEventListener("click", (e) => {
   const selectedList = lists.find((list) => list.id === selectedListId);
-  const completed = selectedList.tasks.filter((task) => task.complete);
   selectedList.tasks = selectedList.tasks.filter((task) => !task.complete);
-  completed.forEach((task) => {
-    Storage.deleteTask(selectedListId, task.id);
-  })
-  render();
+  saveAndRender();
 });
 
 deleteListButton.addEventListener("click", (e) => {
   lists = lists.filter((list) => list.id !== selectedListId);
-  Storage.deleteProject(selectedListId);
   selectedListId = null;
-  render();
+  saveAndRender();
 });
 
 newListForm.addEventListener("submit", (e) => {
@@ -63,26 +58,36 @@ newListForm.addEventListener("submit", (e) => {
   const list = createList(listName);
   newListInput.value = null;
   lists.push(list);
-  render();
+  saveAndRender();
 });
 
 newTaskForm.addEventListener("submit", (e) => {
   e.preventDefault();
   const taskName = newTaskInput.value;
   if (taskName == null || taskName === "") return;
-  const task = createTask(selectedListId, taskName);
+  const task = createTask(taskName);
   newTaskInput.value = null;
   const selectedList = lists.find((list) => list.id === selectedListId);
   selectedList.tasks.push(task);
-  render();
+  saveAndRender();
 });
 
 function createList(name) {
-  return Storage.addProject({ id: Date.now().toString(), name: name, tasks: [] });
+  return { id: Date.now().toString(), name: name, tasks: [] };
 }
 
-function createTask(id, name) {
-  return Storage.addTask(id, { id: Date.now().toString(), name: name, complete: false })
+function createTask(name) {
+  return { id: Date.now().toString(), name: name, complete: false };
+}
+
+function saveAndRender() {
+  save();
+  render();
+}
+
+function save() {
+  localStorage.setItem(LOCAL_STORAGE_LIST_KEY, JSON.stringify(lists));
+  localStorage.setItem(LOCAL_STORAGE_SELECTED_LIST_ID_KEY, selectedListId);
 }
 
 function render() {

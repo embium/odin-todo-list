@@ -62,4 +62,10 @@ export default class Storage {
     todoList.getProject(projectId).deleteTask(taskId)
     Storage.saveTodoList(todoList)
   }
+
+  static setTaskComplete(projectId, taskId, complete) {
+    const todoList = Storage.getTodoList()
+    todoList.getProject(projectId).getTask(taskId).setComplete(complete)
+    Storage.saveTodoList(todoList)
+  }
 }

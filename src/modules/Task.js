@@ -2,6 +2,7 @@ export default class Task {
   constructor(id, name) {
     this.id = id
     this.name = name
+    this.complete
   }
 
   setName(name) {
@@ -14,5 +15,9 @@ export default class Task {
 
   getId() {
     return this.id
+  }
+
+  setComplete(complete) {
+    this.complete = complete
   }
 }
